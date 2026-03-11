@@ -1,6 +1,6 @@
 import { Alert } from 'react-native';
 
-let BASE_URL = 'http://192.0.2.2:8000';
+let BASE_URL = 'http://localhost:8000';
 
 export function getBaseUrl() {
   return BASE_URL;
