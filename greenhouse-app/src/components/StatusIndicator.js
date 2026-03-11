@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     alignSelf: 'center',
-    gap: 8,
+    columnGap: 8,
   },
   dot: {
     fontSize: 10,

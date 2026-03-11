@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    columnGap: 6,
   },
   statusDot: {
     width: 8,
