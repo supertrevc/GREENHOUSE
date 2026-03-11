@@ -1,12 +1,16 @@
+import logging
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.alert_engine import check_thresholds
 from app.database import get_db
 from app.models import Reading
 from app.schemas import ReadingCreate, ReadingResponse
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/readings", tags=["readings"])
 
@@ -29,6 +33,15 @@ def create_reading(reading: ReadingCreate, db: Session = Depends(get_db)):
     db.add(db_reading)
     db.commit()
     db.refresh(db_reading)
+
+    # Check thresholds and fire alerts (failures here must not affect the 201 response)
+    try:
+        alerts = check_thresholds(db, db_reading)
+        if alerts:
+            logger.info("Triggered %d alert(s) for reading %d", len(alerts), db_reading.id)
+    except Exception:
+        logger.exception("Alert engine error for reading %d", db_reading.id)
+
     return db_reading
 
 

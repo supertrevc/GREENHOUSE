@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.database import Base, engine, get_db
 from app.models import Reading
-from app.routers import readings
+from app.routers import alerts, readings, settings
 from app.schemas import StatusResponse
 
 Base.metadata.create_all(bind=engine)
@@ -30,6 +30,8 @@ app.add_middleware(
 )
 
 app.include_router(readings.router)
+app.include_router(settings.router)
+app.include_router(alerts.router)
 
 
 @app.get("/api/status", response_model=StatusResponse)
