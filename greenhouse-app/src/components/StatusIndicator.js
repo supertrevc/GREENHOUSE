@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { colors } from '../theme';
 
-const MARGIN = 5; // degrees/percent from threshold to trigger yellow
+const MARGIN = 5;
 
 export function getStatus(reading, settings) {
   if (!reading || !settings) return 'unknown';
@@ -9,13 +10,11 @@ export function getStatus(reading, settings) {
   const { temperature, humidity } = reading;
   const { min_temperature, max_temperature, min_humidity, max_humidity } = settings;
 
-  // Check for breaches (red)
   if (min_temperature != null && temperature < min_temperature) return 'red';
   if (max_temperature != null && temperature > max_temperature) return 'red';
   if (min_humidity != null && humidity < min_humidity) return 'red';
   if (max_humidity != null && humidity > max_humidity) return 'red';
 
-  // Check for proximity warnings (yellow)
   if (min_temperature != null && temperature < min_temperature + MARGIN) return 'yellow';
   if (max_temperature != null && temperature > max_temperature - MARGIN) return 'yellow';
   if (min_humidity != null && humidity < min_humidity + MARGIN) return 'yellow';
@@ -24,28 +23,21 @@ export function getStatus(reading, settings) {
   return 'green';
 }
 
-const COLORS = {
-  green: '#22c55e',
-  yellow: '#eab308',
-  red: '#ef4444',
-  unknown: '#9ca3af',
-};
-
-const LABELS = {
-  green: 'Normal',
-  yellow: 'Warning',
-  red: 'Alert',
-  unknown: 'Unknown',
+const STATUS_MAP = {
+  green: { color: colors.green, bg: colors.greenDim, label: 'OPTIMAL', icon: '●' },
+  yellow: { color: colors.yellow, bg: colors.yellowDim, label: 'WARNING', icon: '●' },
+  red: { color: colors.red, bg: colors.redDim, label: 'ALERT', icon: '●' },
+  unknown: { color: colors.textTertiary, bg: colors.bgCard, label: 'UNKNOWN', icon: '○' },
 };
 
 export default function StatusIndicator({ reading, settings }) {
   const status = getStatus(reading, settings);
-  const color = COLORS[status];
+  const { color, bg, label, icon } = STATUS_MAP[status];
 
   return (
-    <View style={[styles.container, { backgroundColor: color + '20', borderColor: color }]}>
-      <View style={[styles.dot, { backgroundColor: color }]} />
-      <Text style={[styles.label, { color }]}>{LABELS[status]}</Text>
+    <View style={[styles.container, { backgroundColor: bg, borderColor: color + '40' }]}>
+      <Text style={[styles.dot, { color }]}>{icon}</Text>
+      <Text style={[styles.label, { color }]}>{label}</Text>
     </View>
   );
 }
@@ -54,20 +46,19 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
     alignSelf: 'center',
+    gap: 8,
   },
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 8,
+    fontSize: 10,
   },
   label: {
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 11,
+    letterSpacing: 2,
   },
 });

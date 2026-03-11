@@ -11,8 +11,10 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { getSettings, updateSettings, getBaseUrl, setBaseUrl } from '../api';
+import { colors, glassCard, spacing } from '../theme';
 
 function FieldInput({ label, value, onChangeText, placeholder, suffix }) {
   return (
@@ -24,6 +26,7 @@ function FieldInput({ label, value, onChangeText, placeholder, suffix }) {
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
+          placeholderTextColor={colors.textMuted}
           keyboardType="numeric"
           returnKeyType="done"
         />
@@ -67,7 +70,6 @@ export default function SettingsScreen() {
   };
 
   const handleSave = async () => {
-    // Validate
     const minT = minTemp ? parseFloat(minTemp) : null;
     const maxT = maxTemp ? parseFloat(maxTemp) : null;
     const minH = minHumidity ? parseFloat(minHumidity) : null;
@@ -117,169 +119,170 @@ export default function SettingsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+      <LinearGradient colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]} style={styles.center}>
+        <ActivityIndicator size="large" color={colors.mint} />
         <Text style={styles.loadingText}>Loading settings...</Text>
-      </View>
+      </LinearGradient>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.center}>
-        <Ionicons name="cloud-offline-outline" size={48} color="#94a3b8" />
+      <LinearGradient colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]} style={styles.center}>
+        <Ionicons name="cloud-offline-outline" size={48} color={colors.textTertiary} />
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={loadSettings}>
           <Text style={styles.retryText}>Retry</Text>
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
     );
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <Text style={styles.sectionTitle}>Alert Thresholds</Text>
-        <View style={styles.card}>
-          <FieldInput
-            label="Min Temperature"
-            value={minTemp}
-            onChangeText={setMinTemp}
-            placeholder="e.g. 35"
-            suffix="°F"
-          />
-          <FieldInput
-            label="Max Temperature"
-            value={maxTemp}
-            onChangeText={setMaxTemp}
-            placeholder="e.g. 100"
-            suffix="°F"
-          />
-          <FieldInput
-            label="Min Humidity"
-            value={minHumidity}
-            onChangeText={setMinHumidity}
-            placeholder="e.g. 30"
-            suffix="%"
-          />
-          <FieldInput
-            label="Max Humidity"
-            value={maxHumidity}
-            onChangeText={setMaxHumidity}
-            placeholder="e.g. 90"
-            suffix="%"
-          />
-          <FieldInput
-            label="Alert Cooldown"
-            value={cooldown}
-            onChangeText={setCooldown}
-            placeholder="e.g. 30"
-            suffix="min"
-          />
-        </View>
-
-        <TouchableOpacity
-          style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          {saving ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.saveBtnText}>Save Thresholds</Text>
-          )}
-        </TouchableOpacity>
-
-        <Text style={[styles.sectionTitle, { marginTop: 28 }]}>Server Configuration</Text>
-        <View style={styles.card}>
-          <View style={styles.fieldRow}>
-            <Text style={styles.fieldLabel}>Backend URL</Text>
-            <TextInput
-              style={[styles.input, { flex: 1 }]}
-              value={serverUrl}
-              onChangeText={setServerUrl}
-              placeholder="http://localhost:8000"
-              autoCapitalize="none"
-              keyboardType="url"
-              returnKeyType="done"
+    <LinearGradient colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]} style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView contentContainerStyle={styles.content}>
+          {/* Alert Thresholds Section */}
+          <Text style={styles.sectionTitle}>ALERT THRESHOLDS</Text>
+          <View style={styles.card}>
+            <FieldInput
+              label="Min Temperature"
+              value={minTemp}
+              onChangeText={setMinTemp}
+              placeholder="35"
+              suffix="°F"
+            />
+            <FieldInput
+              label="Max Temperature"
+              value={maxTemp}
+              onChangeText={setMaxTemp}
+              placeholder="100"
+              suffix="°F"
+            />
+            <FieldInput
+              label="Min Humidity"
+              value={minHumidity}
+              onChangeText={setMinHumidity}
+              placeholder="30"
+              suffix="%"
+            />
+            <FieldInput
+              label="Max Humidity"
+              value={maxHumidity}
+              onChangeText={setMaxHumidity}
+              placeholder="90"
+              suffix="%"
+            />
+            <FieldInput
+              label="Alert Cooldown"
+              value={cooldown}
+              onChangeText={setCooldown}
+              placeholder="30"
+              suffix="min"
             />
           </View>
-        </View>
 
-        <TouchableOpacity style={styles.secondaryBtn} onPress={handleServerUrlSave}>
-          <Text style={styles.secondaryBtnText}>Update Server URL</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <TouchableOpacity
+            style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
+            onPress={handleSave}
+            disabled={saving}
+          >
+            {saving ? (
+              <ActivityIndicator color={colors.bgDeep} size="small" />
+            ) : (
+              <Text style={styles.saveBtnText}>Save Thresholds</Text>
+            )}
+          </TouchableOpacity>
+
+          {/* Server Configuration Section */}
+          <Text style={[styles.sectionTitle, { marginTop: 32 }]}>SERVER</Text>
+          <View style={styles.card}>
+            <View style={styles.fieldRow}>
+              <Text style={styles.fieldLabel}>Backend URL</Text>
+              <TextInput
+                style={[styles.input, { flex: 1, textAlign: 'left' }]}
+                value={serverUrl}
+                onChangeText={setServerUrl}
+                placeholder="http://localhost:8000"
+                placeholderTextColor={colors.textMuted}
+                autoCapitalize="none"
+                keyboardType="url"
+                returnKeyType="done"
+              />
+            </View>
+          </View>
+
+          <TouchableOpacity style={styles.secondaryBtn} onPress={handleServerUrlSave}>
+            <Text style={styles.secondaryBtnText}>Update Server URL</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f1f5f9',
-  },
   content: {
-    padding: 20,
+    padding: spacing.lg,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    padding: 20,
+    padding: spacing.lg,
   },
   loadingText: {
-    marginTop: 12,
-    color: '#64748b',
+    marginTop: 16,
+    color: colors.textTertiary,
+    fontSize: 12,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   errorText: {
     marginTop: 12,
-    color: '#64748b',
-    fontSize: 15,
+    color: colors.textSecondary,
+    fontSize: 14,
     textAlign: 'center',
     marginBottom: 16,
   },
   retryBtn: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 24,
+    backgroundColor: colors.mintDim,
+    borderWidth: 1,
+    borderColor: colors.mint,
+    paddingHorizontal: 28,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 14,
   },
   retryText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: colors.mint,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 11,
     fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: 10,
+    color: colors.textTertiary,
+    letterSpacing: 3,
+    marginBottom: 12,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    ...glassCard,
+    padding: spacing.md,
   },
   fieldRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: colors.borderLight,
   },
   fieldLabel: {
     fontSize: 14,
-    color: '#475569',
+    color: colors.textSecondary,
     fontWeight: '500',
     flex: 1,
   },
@@ -288,48 +291,56 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   input: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.bgInput,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     fontSize: 15,
     minWidth: 80,
     textAlign: 'right',
-    color: '#1e293b',
+    color: colors.textPrimary,
   },
   suffix: {
-    fontSize: 14,
-    color: '#94a3b8',
-    marginLeft: 6,
-    width: 24,
+    fontSize: 13,
+    color: colors.textTertiary,
+    marginLeft: 8,
+    width: 28,
   },
   saveBtn: {
-    backgroundColor: '#3b82f6',
-    borderRadius: 12,
-    paddingVertical: 14,
+    backgroundColor: colors.mint,
+    borderRadius: 16,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: spacing.md,
+    shadowColor: colors.mint,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
   },
   saveBtnDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   saveBtnText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 16,
+    color: colors.bgDeep,
+    fontWeight: '800',
+    fontSize: 15,
+    letterSpacing: 1,
   },
   secondaryBtn: {
-    backgroundColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingVertical: 12,
+    backgroundColor: colors.bgCard,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    paddingVertical: 14,
     alignItems: 'center',
     marginTop: 12,
   },
   secondaryBtnText: {
-    color: '#475569',
+    color: colors.textSecondary,
     fontWeight: '600',
-    fontSize: 15,
+    fontSize: 14,
+    letterSpacing: 0.5,
   },
 });

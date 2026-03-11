@@ -8,13 +8,15 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { getLatestReading, getSettings } from '../api';
 import { formatTemperature, formatHumidity, formatTimeAgo, isOnline } from '../utils/formatters';
 import ReadingCard from '../components/ReadingCard';
 import StatusIndicator from '../components/StatusIndicator';
+import { colors, glassCard, spacing } from '../theme';
 
-const POLL_INTERVAL = 30000; // 30 seconds
+const POLL_INTERVAL = 30000;
 
 export default function DashboardScreen() {
   const [reading, setReading] = useState(null);
@@ -57,143 +59,214 @@ export default function DashboardScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
-        <Text style={styles.loadingText}>Loading dashboard...</Text>
-      </View>
+      <LinearGradient colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]} style={styles.center}>
+        <ActivityIndicator size="large" color={colors.mint} />
+        <Text style={styles.loadingText}>Initializing sensors...</Text>
+      </LinearGradient>
     );
   }
 
   if (error && !reading) {
     return (
-      <View style={styles.center}>
-        <Ionicons name="cloud-offline-outline" size={48} color="#94a3b8" />
+      <LinearGradient colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]} style={styles.center}>
+        <View style={styles.errorIcon}>
+          <Ionicons name="cloud-offline-outline" size={48} color={colors.textTertiary} />
+        </View>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={() => fetchData(true)}>
           <Text style={styles.retryText}>Retry</Text>
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
     );
   }
 
   const online = isOnline(reading?.timestamp);
+  const tempValue = formatTemperature(reading?.temperature);
+  const humValue = formatHumidity(reading?.humidity);
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      <StatusIndicator reading={reading} settings={settings} />
+    <LinearGradient colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]} style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.mint}
+            progressBackgroundColor={colors.bgDeep}
+          />
+        }
+      >
+        {/* Status Badge */}
+        <StatusIndicator reading={reading} settings={settings} />
 
-      <View style={styles.cardsRow}>
-        <ReadingCard
-          icon="thermometer-outline"
-          label="Temperature"
-          value={formatTemperature(reading?.temperature)}
-          unit="°F"
-          color="#ef4444"
-        />
-        <ReadingCard
-          icon="water-outline"
-          label="Humidity"
-          value={formatHumidity(reading?.humidity)}
-          unit="%"
-          color="#3b82f6"
-        />
-      </View>
+        {/* Hero Temperature Display */}
+        <View style={styles.heroSection}>
+          <Text style={styles.heroLabel}>TEMPERATURE</Text>
+          <View style={styles.heroRow}>
+            <Text style={styles.heroValue}>{tempValue}</Text>
+            <Text style={styles.heroUnit}>°F</Text>
+          </View>
+        </View>
 
-      <View style={styles.infoRow}>
-        <View style={styles.infoItem}>
-          <Ionicons name="time-outline" size={16} color="#94a3b8" />
-          <Text style={styles.infoLabel}>Last updated</Text>
-          <Text style={styles.infoValue}>{formatTimeAgo(reading?.timestamp)}</Text>
+        {/* Reading Cards */}
+        <View style={styles.cardsRow}>
+          <ReadingCard
+            icon="thermometer-outline"
+            label="Temperature"
+            value={tempValue}
+            unit="°F"
+            color={colors.tempColor}
+          />
+          <ReadingCard
+            icon="water-outline"
+            label="Humidity"
+            value={humValue}
+            unit="%"
+            color={colors.humidityColor}
+          />
         </View>
-        <View style={styles.infoItem}>
-          <View style={[styles.statusDot, { backgroundColor: online ? '#22c55e' : '#ef4444' }]} />
-          <Text style={styles.infoLabel}>Sensor</Text>
-          <Text style={[styles.infoValue, { color: online ? '#22c55e' : '#ef4444' }]}>
-            {online ? 'Online' : 'Offline'}
-          </Text>
+
+        {/* Data Strip */}
+        <View style={styles.dataStrip}>
+          <View style={styles.dataPoint}>
+            <Text style={styles.dataLabel}>STATUS</Text>
+            <View style={styles.statusRow}>
+              <View style={[styles.statusDot, { backgroundColor: online ? colors.green : colors.red }]} />
+              <Text style={[styles.dataValue, { color: online ? colors.green : colors.red }]}>
+                {online ? 'Online' : 'Offline'}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.dataPoint}>
+            <Text style={styles.dataLabel}>LAST UPDATE</Text>
+            <Text style={styles.dataValue}>{formatTimeAgo(reading?.timestamp)}</Text>
+          </View>
+          <View style={styles.dataPoint}>
+            <Text style={styles.dataLabel}>DEW POINT</Text>
+            <Text style={styles.dataValue}>--</Text>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
   },
   content: {
-    padding: 20,
-    paddingTop: 16,
+    padding: spacing.lg,
+    paddingTop: spacing.md,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    padding: 20,
+    padding: spacing.lg,
   },
   loadingText: {
-    marginTop: 12,
-    color: '#64748b',
-    fontSize: 15,
+    marginTop: 16,
+    color: colors.textTertiary,
+    fontSize: 13,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+  },
+  errorIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.bgCard,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 12,
   },
   errorText: {
-    marginTop: 12,
-    color: '#64748b',
-    fontSize: 15,
+    color: colors.textSecondary,
+    fontSize: 14,
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   retryBtn: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 8,
+    backgroundColor: colors.mintDim,
+    borderWidth: 1,
+    borderColor: colors.mint,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 16,
   },
   retryText: {
-    color: '#fff',
+    color: colors.mint,
+    fontWeight: '700',
+    fontSize: 14,
+    letterSpacing: 1,
+  },
+  heroSection: {
+    alignItems: 'center',
+    marginTop: spacing.xl,
+    marginBottom: spacing.xl,
+  },
+  heroLabel: {
+    fontSize: 11,
     fontWeight: '600',
-    fontSize: 15,
+    color: colors.textTertiary,
+    letterSpacing: 3,
+    marginBottom: 8,
+  },
+  heroRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  heroValue: {
+    fontSize: 96,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    letterSpacing: -6,
+    lineHeight: 96,
+  },
+  heroUnit: {
+    fontSize: 28,
+    fontWeight: '300',
+    color: colors.textTertiary,
+    marginLeft: 4,
   },
   cardsRow: {
     flexDirection: 'row',
-    marginTop: 20,
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
-  infoRow: {
+  dataStrip: {
+    ...glassCard,
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    justifyContent: 'space-between',
+    padding: spacing.lg,
   },
-  infoItem: {
+  dataPoint: {
     alignItems: 'center',
+    flex: 1,
   },
-  infoLabel: {
-    fontSize: 12,
-    color: '#94a3b8',
-    marginTop: 4,
-  },
-  infoValue: {
-    fontSize: 14,
+  dataLabel: {
+    fontSize: 10,
     fontWeight: '600',
-    color: '#1e293b',
-    marginTop: 2,
+    color: colors.textTertiary,
+    letterSpacing: 2,
+    marginBottom: 8,
+  },
+  dataValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   statusDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 });

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Alert, Platform } from 'react-native';
+import { Alert, Platform, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import DashboardScreen from './src/screens/DashboardScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import AlertsScreen from './src/screens/AlertsScreen';
+import { colors } from './src/theme';
 
 // Show notifications in the foreground
 Notifications.setNotificationHandler({
@@ -23,10 +24,22 @@ Notifications.setNotificationHandler({
 const Tab = createBottomTabNavigator();
 
 const TAB_ICONS = {
-  Dashboard: { focused: 'home', unfocused: 'home-outline' },
+  Dashboard: { focused: 'leaf', unfocused: 'leaf-outline' },
   History: { focused: 'analytics', unfocused: 'analytics-outline' },
-  Settings: { focused: 'settings', unfocused: 'settings-outline' },
+  Settings: { focused: 'options', unfocused: 'options-outline' },
   Alerts: { focused: 'notifications', unfocused: 'notifications-outline' },
+};
+
+const DarkTheme = {
+  dark: true,
+  colors: {
+    primary: colors.mint,
+    background: colors.bgDeep,
+    card: colors.bgDeep,
+    text: colors.textPrimary,
+    border: colors.border,
+    notification: colors.mint,
+  },
 };
 
 export default function App() {
@@ -36,15 +49,12 @@ export default function App() {
   useEffect(() => {
     registerForPushNotifications();
 
-    // Listen for incoming notifications while app is in foreground
     notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
       const { title, body } = notification.request.content;
       Alert.alert(title || 'Notification', body || '');
     });
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(() => {
-      // User tapped a notification — could navigate to Alerts tab
-    });
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(() => {});
 
     return () => {
       if (notificationListener.current) {
@@ -57,24 +67,57 @@ export default function App() {
   }, []);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={DarkTheme}>
       <Tab.Navigator
         screenOptions={({ route }) => ({
           tabBarIcon: ({ focused, color, size }) => {
             const icons = TAB_ICONS[route.name];
             const iconName = focused ? icons.focused : icons.unfocused;
-            return <Ionicons name={iconName} size={size} color={color} />;
+            return (
+              <View style={focused ? {
+                shadowColor: colors.mint,
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.6,
+                shadowRadius: 8,
+              } : undefined}>
+                <Ionicons name={iconName} size={size} color={color} />
+              </View>
+            );
           },
-          tabBarActiveTintColor: '#3b82f6',
-          tabBarInactiveTintColor: '#94a3b8',
-          headerStyle: { backgroundColor: '#fff' },
-          headerTitleStyle: { fontWeight: '700', color: '#1e293b' },
+          tabBarActiveTintColor: colors.mint,
+          tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.25)',
+          tabBarStyle: {
+            backgroundColor: 'rgba(10, 15, 13, 0.95)',
+            borderTopColor: colors.border,
+            borderTopWidth: 1,
+            height: 88,
+            paddingTop: 8,
+            paddingBottom: 28,
+          },
+          tabBarLabelStyle: {
+            fontSize: 10,
+            fontWeight: '600',
+            letterSpacing: 0.5,
+          },
+          headerStyle: {
+            backgroundColor: colors.bgDeep,
+            borderBottomColor: colors.border,
+            borderBottomWidth: 1,
+            shadowOpacity: 0,
+            elevation: 0,
+          },
+          headerTitleStyle: {
+            fontWeight: '800',
+            color: colors.textPrimary,
+            fontSize: 18,
+            letterSpacing: -0.5,
+          },
         })}
       >
-        <Tab.Screen name="Dashboard" component={DashboardScreen} />
-        <Tab.Screen name="History" component={HistoryScreen} />
-        <Tab.Screen name="Settings" component={SettingsScreen} />
-        <Tab.Screen name="Alerts" component={AlertsScreen} />
+        <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'Climate Core' }} />
+        <Tab.Screen name="History" component={HistoryScreen} options={{ title: 'History' }} />
+        <Tab.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+        <Tab.Screen name="Alerts" component={AlertsScreen} options={{ title: 'Alerts' }} />
       </Tab.Navigator>
     </NavigationContainer>
   );

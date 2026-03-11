@@ -8,15 +8,17 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { LineChart } from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
 import { getReadings, getSettings } from '../api';
+import { colors, glassCard, spacing } from '../theme';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const RANGES = [
-  { label: 'Last 24 Hours', hours: 24 },
-  { label: 'Last 7 Days', hours: 168 },
-  { label: 'Last 30 Days', hours: 720 },
+  { label: '24H', hours: 24 },
+  { label: '7D', hours: 168 },
+  { label: '30D', hours: 720 },
 ];
 
 function downsample(data, maxPoints) {
@@ -54,7 +56,6 @@ export default function HistoryScreen() {
         getReadings(range.hours),
         getSettings().catch(() => null),
       ]);
-      // API returns newest first, reverse for chronological chart order
       setReadings(readingsData.reverse());
       if (settingsData) setSettings(settingsData);
     } catch (e) {
@@ -75,16 +76,15 @@ export default function HistoryScreen() {
   const tempData = sampled.map((r) => r.temperature);
   const humData = sampled.map((r) => r.humidity);
 
-  const renderChart = (data, label, color, unit, minThreshold, maxThreshold) => {
+  const renderChart = (data, label, accentColor, unit, minThreshold, maxThreshold) => {
     if (data.length === 0) return null;
 
-    const datasets = [{ data, color: () => color, strokeWidth: 2 }];
+    const datasets = [{ data, color: () => accentColor, strokeWidth: 2 }];
 
-    // Add threshold reference lines
     if (minThreshold != null) {
       datasets.push({
         data: Array(data.length).fill(minThreshold),
-        color: () => 'rgba(239, 68, 68, 0.4)',
+        color: () => 'rgba(248, 113, 113, 0.35)',
         strokeWidth: 1,
         withDots: false,
       });
@@ -92,7 +92,7 @@ export default function HistoryScreen() {
     if (maxThreshold != null) {
       datasets.push({
         data: Array(data.length).fill(maxThreshold),
-        color: () => 'rgba(239, 68, 68, 0.4)',
+        color: () => 'rgba(248, 113, 113, 0.35)',
         strokeWidth: 1,
         withDots: false,
       });
@@ -108,18 +108,22 @@ export default function HistoryScreen() {
           yAxisSuffix={unit}
           withDots={false}
           withInnerLines={true}
-          withOuterLines={true}
+          withOuterLines={false}
           chartConfig={{
-            backgroundColor: '#fff',
-            backgroundGradientFrom: '#fff',
-            backgroundGradientTo: '#fff',
+            backgroundColor: 'transparent',
+            backgroundGradientFrom: 'rgba(255,255,255,0.02)',
+            backgroundGradientTo: 'rgba(255,255,255,0)',
             decimalPlaces: 0,
-            color: () => color,
-            labelColor: () => '#94a3b8',
+            color: () => accentColor,
+            labelColor: () => 'rgba(255, 255, 255, 0.3)',
             propsForBackgroundLines: {
-              stroke: '#e2e8f0',
-              strokeDasharray: '',
+              stroke: 'rgba(255, 255, 255, 0.06)',
+              strokeDasharray: '4 4',
             },
+            fillShadowGradientFrom: accentColor,
+            fillShadowGradientTo: 'transparent',
+            fillShadowGradientFromOpacity: 0.2,
+            fillShadowGradientToOpacity: 0,
           }}
           bezier
           style={styles.chart}
@@ -129,155 +133,158 @@ export default function HistoryScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.rangeRow}>
-        {RANGES.map((r) => (
-          <TouchableOpacity
-            key={r.hours}
-            style={[styles.rangeBtn, range.hours === r.hours && styles.rangeBtnActive]}
-            onPress={() => setRange(r)}
-          >
-            <Text style={[styles.rangeBtnText, range.hours === r.hours && styles.rangeBtnTextActive]}>
-              {r.label}
+    <LinearGradient colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]} style={styles.container}>
+      <ScrollView contentContainerStyle={styles.content}>
+        {/* Range Selector */}
+        <View style={styles.rangeRow}>
+          {RANGES.map((r) => (
+            <TouchableOpacity
+              key={r.hours}
+              style={[styles.rangeBtn, range.hours === r.hours && styles.rangeBtnActive]}
+              onPress={() => setRange(r)}
+            >
+              <Text style={[styles.rangeBtnText, range.hours === r.hours && styles.rangeBtnTextActive]}>
+                {r.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {loading && (
+          <View style={styles.centerMsg}>
+            <ActivityIndicator size="large" color={colors.mint} />
+          </View>
+        )}
+
+        {error && (
+          <View style={styles.centerMsg}>
+            <Ionicons name="cloud-offline-outline" size={48} color={colors.textTertiary} />
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity style={styles.retryBtn} onPress={fetchData}>
+              <Text style={styles.retryText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {!loading && !error && readings.length === 0 && (
+          <View style={styles.centerMsg}>
+            <Ionicons name="analytics-outline" size={48} color={colors.textTertiary} />
+            <Text style={styles.errorText}>No data for this time range.</Text>
+          </View>
+        )}
+
+        {!loading && !error && readings.length > 0 && (
+          <>
+            {renderChart(
+              tempData,
+              'Temperature',
+              colors.tempColor,
+              '°',
+              settings?.min_temperature,
+              settings?.max_temperature,
+            )}
+            {renderChart(
+              humData,
+              'Humidity',
+              colors.humidityColor,
+              '%',
+              settings?.min_humidity,
+              settings?.max_humidity,
+            )}
+            <Text style={styles.dataInfo}>
+              {readings.length} readings · {range.label.toLowerCase()}
             </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {loading && (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#3b82f6" />
-        </View>
-      )}
-
-      {error && (
-        <View style={styles.center}>
-          <Ionicons name="cloud-offline-outline" size={48} color="#94a3b8" />
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={fetchData}>
-            <Text style={styles.retryText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {!loading && !error && readings.length === 0 && (
-        <View style={styles.center}>
-          <Ionicons name="analytics-outline" size={48} color="#94a3b8" />
-          <Text style={styles.errorText}>No data for this time range.</Text>
-        </View>
-      )}
-
-      {!loading && !error && readings.length > 0 && (
-        <>
-          {renderChart(
-            tempData,
-            'Temperature (°F)',
-            '#ef4444',
-            '°',
-            settings?.min_temperature,
-            settings?.max_temperature,
-          )}
-          {renderChart(
-            humData,
-            'Humidity (%)',
-            '#3b82f6',
-            '%',
-            settings?.min_humidity,
-            settings?.max_humidity,
-          )}
-          <Text style={styles.dataInfo}>
-            {readings.length} readings · {range.label.toLowerCase()}
-          </Text>
-        </>
-      )}
-    </ScrollView>
+          </>
+        )}
+      </ScrollView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
   },
   content: {
-    padding: 20,
+    padding: spacing.lg - 4,
   },
   rangeRow: {
     flexDirection: 'row',
-    marginBottom: 16,
-    backgroundColor: '#e2e8f0',
-    borderRadius: 10,
+    marginBottom: spacing.md,
+    backgroundColor: colors.bgCard,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 3,
   },
   rangeBtn: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 14,
   },
   rangeBtnActive: {
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    backgroundColor: colors.mintDim,
+    borderWidth: 1,
+    borderColor: colors.mint + '30',
   },
   rangeBtnText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#64748b',
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textTertiary,
+    letterSpacing: 1,
   },
   rangeBtnTextActive: {
-    color: '#1e293b',
+    color: colors.mint,
     fontWeight: '700',
   },
   chartCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    ...glassCard,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    overflow: 'hidden',
   },
   chartTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#1e293b',
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textTertiary,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
     marginBottom: 12,
   },
   chart: {
     borderRadius: 12,
     marginLeft: -16,
   },
-  center: {
+  centerMsg: {
     alignItems: 'center',
     paddingVertical: 60,
   },
   errorText: {
     marginTop: 12,
-    color: '#64748b',
-    fontSize: 15,
+    color: colors.textSecondary,
+    fontSize: 14,
     textAlign: 'center',
     marginBottom: 16,
   },
   retryBtn: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 24,
+    backgroundColor: colors.mintDim,
+    borderWidth: 1,
+    borderColor: colors.mint,
+    paddingHorizontal: 28,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 14,
   },
   retryText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: colors.mint,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   dataInfo: {
     textAlign: 'center',
-    color: '#94a3b8',
-    fontSize: 13,
+    color: colors.textTertiary,
+    fontSize: 12,
     marginTop: 4,
+    letterSpacing: 1,
   },
 });

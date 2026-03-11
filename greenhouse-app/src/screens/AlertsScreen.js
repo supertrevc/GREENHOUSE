@@ -8,9 +8,11 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { getAlerts } from '../api';
 import AlertItem from '../components/AlertItem';
+import { colors, spacing } from '../theme';
 
 export default function AlertsScreen() {
   const [alerts, setAlerts] = useState([]);
@@ -43,85 +45,113 @@ export default function AlertsScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+      <LinearGradient colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]} style={styles.center}>
+        <ActivityIndicator size="large" color={colors.mint} />
         <Text style={styles.loadingText}>Loading alerts...</Text>
-      </View>
+      </LinearGradient>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.center}>
-        <Ionicons name="cloud-offline-outline" size={48} color="#94a3b8" />
+      <LinearGradient colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]} style={styles.center}>
+        <Ionicons name="cloud-offline-outline" size={48} color={colors.textTertiary} />
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={() => fetchAlerts(true)}>
           <Text style={styles.retryText}>Retry</Text>
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
     );
   }
 
   if (alerts.length === 0) {
     return (
-      <View style={styles.center}>
-        <Ionicons name="checkmark-circle-outline" size={48} color="#22c55e" />
-        <Text style={styles.emptyText}>No alerts — everything looks good!</Text>
-      </View>
+      <LinearGradient colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]} style={styles.center}>
+        <View style={styles.emptyIcon}>
+          <Ionicons name="checkmark-circle-outline" size={48} color={colors.green} />
+        </View>
+        <Text style={styles.emptyTitle}>All Clear</Text>
+        <Text style={styles.emptyText}>No active alerts — all systems nominal.</Text>
+      </LinearGradient>
     );
   }
 
   return (
-    <FlatList
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      data={alerts}
-      keyExtractor={(item) => String(item.id)}
-      renderItem={({ item }) => <AlertItem alert={item} />}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    />
+    <LinearGradient colors={[colors.gradientStart, colors.gradientMid, colors.gradientEnd]} style={{ flex: 1 }}>
+      <FlatList
+        contentContainerStyle={styles.content}
+        data={alerts}
+        keyExtractor={(item) => String(item.id)}
+        renderItem={({ item }) => <AlertItem alert={item} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.mint}
+            progressBackgroundColor={colors.bgDeep}
+          />
+        }
+      />
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f1f5f9',
-  },
   content: {
-    padding: 16,
+    padding: spacing.md,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    padding: 20,
+    padding: spacing.lg,
   },
   loadingText: {
-    marginTop: 12,
-    color: '#64748b',
+    marginTop: 16,
+    color: colors.textTertiary,
+    fontSize: 12,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   errorText: {
     marginTop: 12,
-    color: '#64748b',
-    fontSize: 15,
+    color: colors.textSecondary,
+    fontSize: 14,
     textAlign: 'center',
     marginBottom: 16,
   },
-  emptyText: {
-    marginTop: 12,
-    color: '#64748b',
-    fontSize: 15,
-  },
   retryBtn: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 24,
+    backgroundColor: colors.mintDim,
+    borderWidth: 1,
+    borderColor: colors.mint,
+    paddingHorizontal: 28,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 14,
   },
   retryText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: colors.mint,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  emptyIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.greenDim,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.textPrimary,
+    letterSpacing: -0.5,
+    marginBottom: 6,
+  },
+  emptyText: {
+    color: colors.textTertiary,
+    fontSize: 13,
+    letterSpacing: 0.5,
   },
 });

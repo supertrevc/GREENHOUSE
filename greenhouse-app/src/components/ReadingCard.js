@@ -1,16 +1,21 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { colors, glassCard, spacing } from '../theme';
 
-export default function ReadingCard({ icon, label, value, unit, color = '#1e293b' }) {
+export default function ReadingCard({ icon, label, value, unit, color = colors.mint }) {
   return (
     <View style={styles.card}>
-      <Ionicons name={icon} size={28} color={color} style={styles.icon} />
+      <View style={[styles.iconWrap, { backgroundColor: color + '15' }]}>
+        <Ionicons name={icon} size={22} color={color} />
+      </View>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.valueRow}>
-        <Text style={[styles.value, { color }]}>{value}</Text>
+        <Text style={styles.value}>{value}</Text>
         <Text style={[styles.unit, { color }]}>{unit}</Text>
       </View>
+      {/* Decorative glow line at bottom */}
+      <View style={[styles.glowLine, { backgroundColor: color + '30' }]} />
     </View>
   );
 }
@@ -18,38 +23,50 @@ export default function ReadingCard({ icon, label, value, unit, color = '#1e293b
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
+    ...glassCard,
+    padding: spacing.lg,
     alignItems: 'center',
     marginHorizontal: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    overflow: 'hidden',
   },
-  icon: {
-    marginBottom: 8,
+  iconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   label: {
-    fontSize: 13,
-    color: '#64748b',
-    fontWeight: '500',
-    marginBottom: 4,
+    fontSize: 11,
+    color: colors.textTertiary,
+    fontWeight: '600',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 8,
   },
   valueRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'baseline',
   },
   value: {
-    fontSize: 42,
+    fontSize: 36,
     fontWeight: '700',
+    color: colors.textPrimary,
+    letterSpacing: -2,
   },
   unit: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginTop: 6,
+    fontSize: 16,
+    fontWeight: '500',
+    marginTop: 4,
     marginLeft: 2,
+  },
+  glowLine: {
+    position: 'absolute',
+    bottom: 0,
+    left: 24,
+    right: 24,
+    height: 2,
+    borderRadius: 1,
   },
 });
